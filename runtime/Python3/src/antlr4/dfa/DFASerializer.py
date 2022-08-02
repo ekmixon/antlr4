@@ -27,7 +27,7 @@ class DFASerializer(object):
                 n = 0
                 if s.edges is not None:
                     n = len(s.edges)
-                for i in range(0, n):
+                for i in range(n):
                     t = s.edges[i]
                     if t is not None and t.stateNumber != 0x7FFFFFFF:
                         buf.write(self.getStateString(s))
@@ -38,10 +38,7 @@ class DFASerializer(object):
                         buf.write(self.getStateString(t))
                         buf.write('\n')
             output = buf.getvalue()
-            if len(output)==0:
-                return None
-            else:
-                return output
+            return None if len(output)==0 else output
 
     def getEdgeLabel(self, i:int):
         if i==0:
@@ -56,13 +53,12 @@ class DFASerializer(object):
     def getStateString(self, s:DFAState):
         n = s.stateNumber
         baseStateStr = ( ":" if s.isAcceptState else "") + "s" + str(n) + ( "^" if s.requiresFullContext else "")
-        if s.isAcceptState:
-            if s.predicates is not None:
-                return baseStateStr + "=>" + str_list(s.predicates)
-            else:
-                return baseStateStr + "=>" + str(s.prediction)
-        else:
+        if not s.isAcceptState:
             return baseStateStr
+        if s.predicates is not None:
+            return f"{baseStateStr}=>{str_list(s.predicates)}"
+        else:
+            return f"{baseStateStr}=>{str(s.prediction)}"
 
 class LexerDFASerializer(DFASerializer):
 

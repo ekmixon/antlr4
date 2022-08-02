@@ -153,10 +153,7 @@ class FailedPredicateException(RecognitionException):
         self.offendingToken = recognizer.getCurrentToken()
 
     def formatMessage(self, predicate:str, message:str):
-        if message is not None:
-            return message
-        else:
-            return "failed predicate: {" + predicate + "}?"
+        return "failed predicate: {" + predicate + "}?" if message is None else message
 
 class ParseCancellationException(CancellationException):
 

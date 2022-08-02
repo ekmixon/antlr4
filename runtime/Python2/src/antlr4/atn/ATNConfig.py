@@ -109,9 +109,8 @@ class LexerATNConfig(ATNConfig):
 
     def __init__(self, state, alt=None, context=None, semantic=SemanticContext.NONE, lexerActionExecutor=None, config=None):
         super(LexerATNConfig, self).__init__(state=state, alt=alt, context=context, semantic=semantic, config=config)
-        if config is not None:
-            if lexerActionExecutor is None:
-                lexerActionExecutor = config.lexerActionExecutor
+        if config is not None and lexerActionExecutor is None:
+            lexerActionExecutor = config.lexerActionExecutor
         # This is the backing field for {@link #getLexerActionExecutor}.
         self.lexerActionExecutor = lexerActionExecutor
         self.passedThroughNonGreedyDecision = False if config is None else self.checkNonGreedyDecision(config, state)
@@ -128,9 +127,11 @@ class LexerATNConfig(ATNConfig):
             return False
         if self.passedThroughNonGreedyDecision != other.passedThroughNonGreedyDecision:
             return False
-        if not(self.lexerActionExecutor==other.lexerActionExecutor):
-            return False
-        return super(LexerATNConfig, self).__eq__(other)
+        return (
+            super(LexerATNConfig, self).__eq__(other)
+            if self.lexerActionExecutor == other.lexerActionExecutor
+            else False
+        )
 
 
 

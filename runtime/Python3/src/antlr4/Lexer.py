@@ -174,7 +174,7 @@ class Lexer(Recognizer, TokenSource):
 
     def pushMode(self, m:int):
         if self._interp.debug:
-            print("pushMode " + str(m), file=self._output)
+            print(f"pushMode {m}", file=self._output)
         self._modeStack.append(self._mode)
         self.mode(m)
 
@@ -182,7 +182,7 @@ class Lexer(Recognizer, TokenSource):
         if len(self._modeStack)==0:
             raise Exception("Empty Stack")
         if self._interp.debug:
-            print("popMode back to "+ self._modeStack[:-1], file=self._output)
+            print(f"popMode back to {self._modeStack[:-1]}", file=self._output)
         self.mode( self._modeStack.pop() )
         return self._mode
 
@@ -263,10 +263,7 @@ class Lexer(Recognizer, TokenSource):
     #  text override.
     @property
     def text(self):
-        if self._text is not None:
-            return self._text
-        else:
-            return self._interp.getText(self._input)
+        return self._interp.getText(self._input) if self._text is None else self._text
 
     # Set the complete text of self token; it wipes any previous
     #  changes to the text.

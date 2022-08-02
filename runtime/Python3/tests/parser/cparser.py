@@ -991,31 +991,24 @@ class CParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 168
                 self.match(CParser.Identifier)
-                pass
-
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 169
                 self.match(CParser.Constant)
-                pass
-
             elif la_ == 3:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 171
                 self._errHandler.sync(self)
                 _alt = 1
-                while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
-                    if _alt == 1:
-                        self.state = 170
-                        self.match(CParser.StringLiteral)
-
-                    else:
+                while _alt not in [2, ATN.INVALID_ALT_NUMBER]:
+                    if _alt != 1:
                         raise NoViableAltException(self)
+                    self.state = 170
+                    self.match(CParser.StringLiteral)
+
                     self.state = 173
                     self._errHandler.sync(self)
                     _alt = self._interp.adaptivePredict(self._input,0,self._ctx)
-
-                pass
 
             elif la_ == 4:
                 self.enterOuterAlt(localctx, 4)
@@ -1025,14 +1018,10 @@ class CParser ( Parser ):
                 self.expression(0)
                 self.state = 177
                 self.match(CParser.RightParen)
-                pass
-
             elif la_ == 5:
                 self.enterOuterAlt(localctx, 5)
                 self.state = 179
                 self.genericSelection()
-                pass
-
             elif la_ == 6:
                 self.enterOuterAlt(localctx, 6)
                 self.state = 181
@@ -1048,8 +1037,6 @@ class CParser ( Parser ):
                 self.compoundStatement()
                 self.state = 185
                 self.match(CParser.RightParen)
-                pass
-
             elif la_ == 7:
                 self.enterOuterAlt(localctx, 7)
                 self.state = 187
@@ -1064,8 +1051,6 @@ class CParser ( Parser ):
                 self.typeName()
                 self.state = 192
                 self.match(CParser.RightParen)
-                pass
-
             elif la_ == 8:
                 self.enterOuterAlt(localctx, 8)
                 self.state = 194
@@ -1080,9 +1065,6 @@ class CParser ( Parser ):
                 self.unaryExpression()
                 self.state = 199
                 self.match(CParser.RightParen)
-                pass
-
-
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -1199,7 +1181,7 @@ class CParser ( Parser ):
             self.state = 218
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,3,self._ctx)
-            while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
+            while _alt not in [2, ATN.INVALID_ALT_NUMBER]:
                 if _alt==1:
                     if self._parseListeners is not None:
                         self.triggerExitRuleEvent()

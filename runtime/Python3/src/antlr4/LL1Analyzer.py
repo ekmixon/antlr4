@@ -40,7 +40,7 @@ class LL1Analyzer (object):
 
         count = len(s.transitions)
         look = [] * count
-        for alt in range(0, count):
+        for alt in range(count):
             look[alt] = set()
             lookBusy = set()
             seeThruPreds = False # fail to get lookahead upon pred
@@ -136,7 +136,7 @@ class LL1Analyzer (object):
                 try:
                     calledRuleStack.discard(s.ruleIndex)
                     # run thru all possible stack tops in ctx
-                    for i in range(0, len(ctx)):
+                    for i in range(len(ctx)):
                         returnState = self.atn.states[ctx.getReturnState(i)]
                         self._LOOK(returnState, stopState, ctx.getParent(i), look, lookBusy, calledRuleStack, seeThruPreds, addEOF)
                 finally:

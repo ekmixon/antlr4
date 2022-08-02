@@ -29,7 +29,7 @@ class Trees(object):
             buf.write(u"(")
             buf.write(s)
             buf.write(u' ')
-            for i in range(0, t.getChildCount()):
+            for i in range(t.getChildCount()):
                 if i > 0:
                     buf.write(u' ')
                 buf.write(cls.toStringTree(t.getChild(i), ruleNames))
@@ -43,7 +43,7 @@ class Trees(object):
         if ruleNames is not None:
             if isinstance(t, RuleNode):
                 if t.getAltNumber()!=ATN.INVALID_ALT_NUMBER:
-                    return ruleNames[t.getRuleIndex()]+":"+str(t.getAltNumber())
+                    return f"{ruleNames[t.getRuleIndex()]}:{str(t.getAltNumber())}"
                 return ruleNames[t.getRuleIndex()]
             elif isinstance( t, ErrorNode):
                 return unicode(t)
@@ -52,15 +52,13 @@ class Trees(object):
                     return t.symbol.text
         # no recog for rule names
         payload = t.getPayload()
-        if isinstance(payload, Token ):
-            return payload.text
-        return unicode(t.getPayload())
+        return payload.text if isinstance(payload, Token ) else unicode(t.getPayload())
 
 
     # Return ordered list of all children of this node
     @classmethod
     def getChildren(cls, t):
-        return [ t.getChild(i) for i in range(0, t.getChildCount()) ]
+        return [t.getChild(i) for i in range(t.getChildCount())]
 
     # Return a list of all ancestors of this node.  The first node of
     #  list is the root and the last is the parent of this node.
@@ -92,19 +90,23 @@ class Trees(object):
     def _findAllNodes(cls, t, index, findTokens, nodes):
         from antlr4.ParserRuleContext import ParserRuleContext
         # check this node (the root) first
-        if findTokens and isinstance(t, TerminalNode):
-            if t.symbol.type==index:
-                nodes.append(t)
-        elif not findTokens and isinstance(t, ParserRuleContext):
-            if t.ruleIndex == index:
-                nodes.append(t)
+        if (
+            findTokens
+            and isinstance(t, TerminalNode)
+            and t.symbol.type == index
+            or (not findTokens or not isinstance(t, TerminalNode))
+            and not findTokens
+            and isinstance(t, ParserRuleContext)
+            and t.ruleIndex == index
+        ):
+            nodes.append(t)
         # check children
-        for i in range(0, t.getChildCount()):
+        for i in range(t.getChildCount()):
             cls._findAllNodes(t.getChild(i), index, findTokens, nodes)
 
     @classmethod
     def descendants(cls, t):
         nodes = [t]
-        for i in range(0, t.getChildCount()):
+        for i in range(t.getChildCount()):
             nodes.extend(cls.descendants(t.getChild(i)))
         return nodes

@@ -84,7 +84,7 @@ def calculateListsHashCode(parents:[], returnStates:[] ):
 class PredictionContextCache(object):
 
     def __init__(self):
-        self.cache = dict()
+        self.cache = {}
 
     #  Add a context to the cache and return it. If the context already exists,
     #  return that one instead and do not add a new context to the cache.
@@ -134,9 +134,7 @@ class SingletonPredictionContext(PredictionContext):
     def __eq__(self, other):
         if self is other:
             return True
-        elif other is None:
-            return False
-        elif not isinstance(other, SingletonPredictionContext):
+        elif other is None or not isinstance(other, SingletonPredictionContext):
             return False
         else:
             return self.returnState == other.returnState and self.parentCtx == other.parentCtx
@@ -146,13 +144,12 @@ class SingletonPredictionContext(PredictionContext):
 
     def __str__(self):
         up = "" if self.parentCtx is None else str(self.parentCtx)
-        if len(up)==0:
-            if self.returnState == self.EMPTY_RETURN_STATE:
-                return "$"
-            else:
-                return str(self.returnState)
+        if up:
+            return f"{str(self.returnState)} {up}"
+        if self.returnState == self.EMPTY_RETURN_STATE:
+            return "$"
         else:
-            return str(self.returnState) + " " + up
+            return str(self.returnState)
 
 
 class EmptyPredictionContext(SingletonPredictionContext):
@@ -202,10 +199,10 @@ class ArrayPredictionContext(PredictionContext):
     def __eq__(self, other):
         if self is other:
             return True
-        elif not isinstance(other, ArrayPredictionContext):
+        elif not isinstance(other, ArrayPredictionContext) or hash(self) != hash(
+            other
+        ):
             return False
-        elif hash(self) != hash(other):
-            return False # can't be same if hash is different
         else:
             return self.returnStates==other.returnStates and self.parents==other.parents
 
@@ -214,7 +211,7 @@ class ArrayPredictionContext(PredictionContext):
             return "[]"
         with StringIO() as buf:
             buf.write("[")
-            for i in range(0,len(self.returnStates)):
+            for i in range(len(self.returnStates)):
                 if i>0:
                     buf.write(", ")
                 if self.returnStates[i]==PredictionContext.EMPTY_RETURN_STATE:
@@ -307,10 +304,10 @@ def merge(a:PredictionContext, b:PredictionContext, rootIsWildcard:bool, mergeCa
 #/
 def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIsWildcard:bool, mergeCache:dict):
     if mergeCache is not None:
-        previous = mergeCache.get((a,b), None)
+        previous = mergeCache.get((a, b))
         if previous is not None:
             return previous
-        previous = mergeCache.get((b,a), None)
+        previous = mergeCache.get((b, a))
         if previous is not None:
             return previous
 
@@ -332,9 +329,6 @@ def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, 
         # of those graphs.  dup a, a' points at merged array
         # new joined parent so create new singleton pointing to it, a'
         merged = SingletonPredictionContext.create(parent, a.returnState)
-        if mergeCache is not None:
-            mergeCache[(a, b)] = merged
-        return merged
     else: # a != b payloads differ
         # see if we can collapse parents due to $+x parents if local ctx
         singleParent = None
@@ -359,9 +353,10 @@ def mergeSingletons(a:SingletonPredictionContext, b:SingletonPredictionContext, 
             payloads = [ b.returnState, a.returnState ]
             parents = [ b.parentCtx, a.parentCtx ]
         merged = ArrayPredictionContext(parents, payloads)
-        if mergeCache is not None:
-            mergeCache[(a, b)] = merged
-        return merged
+
+    if mergeCache is not None:
+        mergeCache[(a, b)] = merged
+    return merged
 
 
 #
@@ -408,17 +403,16 @@ def mergeRoot(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIs
             return PredictionContext.EMPTY  ## + b =#
         if b == PredictionContext.EMPTY:
             return PredictionContext.EMPTY  # a +# =#
-    else:
-        if a == PredictionContext.EMPTY and b == PredictionContext.EMPTY:
-            return PredictionContext.EMPTY # $ + $ = $
-        elif a == PredictionContext.EMPTY: # $ + x = [$,x]
-            payloads = [ b.returnState, PredictionContext.EMPTY_RETURN_STATE ]
-            parents = [ b.parentCtx, None ]
-            return ArrayPredictionContext(parents, payloads)
-        elif b == PredictionContext.EMPTY: # x + $ = [$,x] ($ is always first if present)
-            payloads = [ a.returnState, PredictionContext.EMPTY_RETURN_STATE ]
-            parents = [ a.parentCtx, None ]
-            return ArrayPredictionContext(parents, payloads)
+    elif a == PredictionContext.EMPTY and b == PredictionContext.EMPTY:
+        return PredictionContext.EMPTY # $ + $ = $
+    elif a == PredictionContext.EMPTY: # $ + x = [$,x]
+        payloads = [ b.returnState, PredictionContext.EMPTY_RETURN_STATE ]
+        parents = [ b.parentCtx, None ]
+        return ArrayPredictionContext(parents, payloads)
+    elif b == PredictionContext.EMPTY: # x + $ = [$,x] ($ is always first if present)
+        payloads = [ a.returnState, PredictionContext.EMPTY_RETURN_STATE ]
+        parents = [ a.parentCtx, None ]
+        return ArrayPredictionContext(parents, payloads)
     return None
 
 
@@ -443,10 +437,10 @@ def mergeRoot(a:SingletonPredictionContext, b:SingletonPredictionContext, rootIs
 #/
 def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildcard:bool, mergeCache:dict):
     if mergeCache is not None:
-        previous = mergeCache.get((a,b), None)
+        previous = mergeCache.get((a, b))
         if previous is not None:
             return previous
-        previous = mergeCache.get((b,a), None)
+        previous = mergeCache.get((b, a))
         if previous is not None:
             return previous
 
@@ -470,11 +464,10 @@ def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildca
             ax_ax = (a_parent is not None and b_parent is not None) and a_parent==b_parent # ax+ax -> ax
             if bothDollars or ax_ax:
                 mergedParents[k] = a_parent # choose left
-                mergedReturnStates[k] = payload
             else: # ax+ay -> a'[x,y]
                 mergedParent = merge(a_parent, b_parent, rootIsWildcard, mergeCache)
                 mergedParents[k] = mergedParent
-                mergedReturnStates[k] = payload
+            mergedReturnStates[k] = payload
             i += 1 # hop over left one as usual
             j += 1 # but also skip one in right side since we merge
         elif a.returnStates[i]<b.returnStates[j]: # copy a[i] to M
@@ -506,8 +499,8 @@ def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildca
             if mergeCache is not None:
                 mergeCache[(a,b)] = merged
             return merged
-        mergedParents = mergedParents[0:k]
-        mergedReturnStates = mergedReturnStates[0:k]
+        mergedParents = mergedParents[:k]
+        mergedReturnStates = mergedReturnStates[:k]
 
     merged = ArrayPredictionContext(mergedParents, mergedReturnStates)
 
@@ -533,14 +526,14 @@ def mergeArrays(a:ArrayPredictionContext, b:ArrayPredictionContext, rootIsWildca
 # ones.
 #/
 def combineCommonParents(parents:list):
-    uniqueParents = dict()
+    uniqueParents = {}
 
-    for p in range(0, len(parents)):
-        parent = parents[p]
+    for parent_ in parents:
+        parent = parent_
         if uniqueParents.get(parent, None) is None:
             uniqueParents[parent] = parent
 
-    for p in range(0, len(parents)):
+    for p in range(len(parents)):
         parents[p] = uniqueParents[parents[p]]
 
 def getCachedPredictionContext(context:PredictionContext, contextCache:PredictionContextCache, visited:dict):
@@ -555,12 +548,13 @@ def getCachedPredictionContext(context:PredictionContext, contextCache:Predictio
         return existing
     changed = False
     parents = [None] * len(context)
-    for i in range(0, len(parents)):
+    for i in range(len(parents)):
         parent = getCachedPredictionContext(context.getParent(i), contextCache, visited)
-        if changed or parent is not context.getParent(i):
-            if not changed:
-                parents = [context.getParent(j) for j in range(len(context))]
-                changed = True
+        if changed:
+            parents[i] = parent
+        elif parent is not context.getParent(i):
+            parents = [context.getParent(j) for j in range(len(context))]
+            changed = True
             parents[i] = parent
     if not changed:
         contextCache.add(context)
@@ -607,17 +601,17 @@ def getCachedPredictionContext(context:PredictionContext, contextCache:Predictio
 # ter's recursive version of Sam's getAllNodes()
 def getAllContextNodes(context:PredictionContext, nodes:list=None, visited:dict=None):
     if nodes is None:
-        nodes = list()
+        nodes = []
         return getAllContextNodes(context, nodes, visited)
     elif visited is None:
-        visited = dict()
+        visited = {}
         return getAllContextNodes(context, nodes, visited)
     else:
         if context is None or visited.get(context, None) is not None:
             return nodes
         visited.put(context, context)
         nodes.add(context)
-        for i in range(0, len(context)):
+        for i in range(len(context)):
             getAllContextNodes(context.getParent(i), nodes, visited)
         return nodes
 
