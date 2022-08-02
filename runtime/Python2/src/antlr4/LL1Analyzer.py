@@ -37,12 +37,12 @@ class LL1Analyzer (object):
 
         count = len(s.transitions)
         look = [] * count
-        for alt in range(0, count):
+        for alt in range(count):
             look[alt] = set()
             lookBusy = set()
             seeThruPreds = False # fail to get lookahead upon pred
             self._LOOK(s.transition(alt).target, None, PredictionContext.EMPTY, \
-                  look[alt], lookBusy, set(), seeThruPreds, False)
+                      look[alt], lookBusy, set(), seeThruPreds, False)
             # Wipe out lookahead for this alternative if we found nothing
             # or we had a predicate when we !seeThruPreds
             if len(look[alt])==0 or self.HIT_PRED in look[alt]:
@@ -105,7 +105,7 @@ class LL1Analyzer (object):
     # is {@code null}.
     #/
     def _LOOK(self, s, stopState , ctx, look, lookBusy, \
-                     calledRuleStack, seeThruPreds, addEOF):
+                         calledRuleStack, seeThruPreds, addEOF):
         c = ATNConfig(s, 0, ctx)
 
         if c in lookBusy:
@@ -133,7 +133,7 @@ class LL1Analyzer (object):
                 try:
                     calledRuleStack.discard(s.ruleIndex)
                     # run thru all possible stack tops in ctx
-                    for i in range(0, len(ctx)):
+                    for i in range(len(ctx)):
                         returnState = self.atn.states[ctx.getReturnState(i)]
                         self._LOOK(returnState, stopState, ctx.getParent(i), look, lookBusy, calledRuleStack, seeThruPreds, addEOF)
                 finally:

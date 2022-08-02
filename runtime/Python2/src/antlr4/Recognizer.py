@@ -19,14 +19,14 @@ class Recognizer(object):
 
     def extractVersion(self, version):
         pos = version.find(".")
-        major = version[0:pos]
+        major = version[:pos]
         version = version[pos+1:]
         pos = version.find(".")
         if pos==-1:
             pos = version.find("-")
         if pos==-1:
             pos = len(version)
-        minor = version[0:pos]
+        minor = version[:pos]
         return major, minor
 
     def checkVersion(self, toolVersion):
@@ -34,7 +34,9 @@ class Recognizer(object):
         rvmajor, rvminor = self.extractVersion(runtimeVersion)
         tvmajor, tvminor = self.extractVersion(toolVersion)
         if rvmajor!=tvmajor or rvminor!=tvminor:
-            print("ANTLR runtime and generated code versions disagree: "+runtimeVersion+"!="+toolVersion)
+            print(
+                f"ANTLR runtime and generated code versions disagree: {runtimeVersion}!={toolVersion}"
+            )
 
     def addErrorListener(self, listener):
         self._listeners.append(listener)
@@ -52,7 +54,7 @@ class Recognizer(object):
             raise UnsupportedOperationException("The current recognizer does not provide a list of token names.")
         result = self.tokenTypeMapCache.get(tokenNames, None)
         if result is None:
-            result = zip( tokenNames, range(0, len(tokenNames)))
+            result = zip(tokenNames, range(len(tokenNames)))
             result["EOF"] = Token.EOF
             self.tokenTypeMapCache[tokenNames] = result
         return result
@@ -68,23 +70,20 @@ class Recognizer(object):
             raise UnsupportedOperationException("The current recognizer does not provide a list of rule names.")
         result = self.ruleIndexMapCache.get(ruleNames, None)
         if result is None:
-            result = zip( ruleNames, range(0, len(ruleNames)))
+            result = zip(ruleNames, range(len(ruleNames)))
             self.ruleIndexMapCache[ruleNames] = result
         return result
 
     def getTokenType(self, tokenName):
         ttype = self.getTokenTypeMap().get(tokenName, None)
-        if ttype is not None:
-            return ttype
-        else:
-            return Token.INVALID_TYPE
+        return ttype if ttype is not None else Token.INVALID_TYPE
 
 
     # What is the error header, normally line/character position information?#
     def getErrorHeader(self, e):
         line = e.getOffendingToken().line
         column = e.getOffendingToken().column
-        return u"line " + unicode(line) + u":" + unicode(column)
+        return f"line {unicode(line)}:{unicode(column)}"
 
 
     # How should a token be displayed in an error message? The default
@@ -105,10 +104,7 @@ class Recognizer(object):
             return u"<no token>"
         s = t.text
         if s is None:
-            if t.type==Token.EOF:
-                s = u"<EOF>"
-            else:
-                s = u"<" + unicode(t.type) + u">"
+            s = u"<EOF>" if t.type==Token.EOF else f"<{unicode(t.type)}>"
         s = s.replace(u"\n",u"\\n")
         s = s.replace(u"\r",u"\\r")
         s = s.replace(u"\t",u"\\t")

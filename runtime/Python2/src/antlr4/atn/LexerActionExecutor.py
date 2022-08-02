@@ -74,10 +74,10 @@ class LexerActionExecutor(object):
     #/
     def fixOffsetBeforeMatch(self, offset):
         updatedLexerActions = None
-        for i in range(0, len(self.lexerActions)):
+        for i in range(len(self.lexerActions)):
             if self.lexerActions[i].isPositionDependent and not isinstance(self.lexerActions[i], LexerIndexedCustomAction):
                 if updatedLexerActions is None:
-                    updatedLexerActions = [ la for la in self.lexerActions ]
+                    updatedLexerActions = list(self.lexerActions)
                 updatedLexerActions[i] = LexerIndexedCustomAction(offset, self.lexerActions[i])
 
         if updatedLexerActions is None:
